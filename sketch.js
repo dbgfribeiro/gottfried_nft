@@ -1,5 +1,5 @@
 /*------------------------------------DECLARATIONS------------------------------------*/
-const selectedBuilding = buildingsData[1];
+const selectedBuilding = buildingsData[0];
 
 let silhouetteWidth, silhouetteHeight, cols, rows;
 let cellWidth, cellHeight, gridWidth, gridHeight, xOffset, yOffset;
@@ -17,6 +17,7 @@ function preload() {
   // Load shape images into the array
   for (let i = 0;i < 10;i++) {
     shapeImages[i] = loadImage(`assets/shape${i}.svg`);
+    // shapeImages[i] = loadImage(`assets/shapes/building${selectedBuilding.id}/shape${i}.svg`);
   }
 }
 
@@ -31,6 +32,15 @@ function setup() {
     silhouetteHeight = silhouetteHeight / 1.5;
     silhouetteWidth = silhouetteWidth / 1.5;
   }
+  // Scale adjustment if the silhuette is too small
+  else if (silhouetteHeight < 280 && silhouetteHeight >= 150) {
+    silhouetteHeight = Math.round(silhouetteHeight * 1.5);
+    silhouetteWidth = Math.round(silhouetteWidth * 1.5);
+  }
+  else if (silhouetteHeight < 150) {
+    silhouetteHeight = Math.round(silhouetteHeight * 3);
+    silhouetteWidth = Math.round(silhouetteWidth * 3);
+  }
 
   cols = selectedBuilding.constructionEnd - selectedBuilding.constructionStart;
   // If the number of floors is unknown the number of rows is calculated by buildingMaxHeight / 300
@@ -42,7 +52,7 @@ function setup() {
   gridWidth = Math.round(cellWidth * cols);
   gridHeight = Math.round(cellHeight * rows);
   xOffset = Math.round((width - gridWidth) / 2);
-  yOffset = Math.round(height - gridHeight);
+  yOffset = Math.round((height - gridHeight) / 2);
 
   // Create the initial set of shapes at random positions in the grid
   for (let i = 0;i < shapeImages.length;i++) {
@@ -60,12 +70,12 @@ function setup() {
 
 /*------------------------------------DRAW------------------------------------*/
 function draw() {
-  background(255);
+  background("#101010");
   translate(xOffset, yOffset);
 
   // Draw the grid
   noFill();
-  stroke(0, 0, 0, 25);
+  stroke(255, 255, 255, 15)
   strokeWeight(1);
   for (let row = 0;row < rows;row++) {
     for (let col = 0;col < cols;col++) {
@@ -76,8 +86,8 @@ function draw() {
   }
 
   // Draw the silhouette of the building from provided paths
-  stroke("#000000")
-  strokeWeight(4)
+  stroke(255, 255, 255, 150)
+  strokeWeight(2)
   beginShape();
   for (let i = 0;i < selectedBuilding.buildingSilhouette.length;i++) {
     let vertexType = selectedBuilding.buildingSilhouette[i];
