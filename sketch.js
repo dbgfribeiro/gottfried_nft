@@ -1,51 +1,17 @@
-const buildings = [
-  {
-    id: 0,
-    name: 'Neviges Wallfahrtsdom',
-    buildingMaxWidth: 6118, // cm
-    buildingMaxHeight: 3400, // cm
-    constructionStart: 1966,
-    constructionEnd: 1968,
-    numFloors: null,
-    maxShapeSize: 300,
-    buildingSilhouette: wallPaths[0]
-  },
-  {
-    id: 1,
-    name: 'Bensberg Town Hall',
-    buildingMaxWidth: 1209, // cm
-    buildingMaxHeight: 4335, // cm
-    constructionStart: 1962,
-    constructionEnd: 1969,
-    numFloors: 10,
-    maxShapeSize: 100,
-    buildingSilhouette: wallPaths[1]
-  },
-  {
-    id: 2,
-    name: 'Christi Auferstehung',
-    buildingMaxWidth: 3361, // cm
-    buildingMaxHeight: 1700, // cm
-    constructionStart: 1967,
-    constructionEnd: 1971,
-    numFloors: null,
-    maxShapeSize: 50,
-    buildingSilhouette: wallPaths[2]
-  },
-]
-const selectedBuilding = buildings[0];
+/*------------------------------------DECLARATIONS------------------------------------*/
+const selectedBuilding = buildingsData[1];
 
 let silhouetteWidth, silhouetteHeight, cols, rows;
 let cellWidth, cellHeight, gridWidth, gridHeight, xOffset, yOffset;
+let startTime;
 
 let canvasWidth = 1280;
 let canvasHeight = 720;
 
-// Define an array to store the falling shapes
+// Define an array to store all the shapes
 let shapes = [];
-let stackedShapes = [];
 
-// Load building outline image and shape images
+// Load correspondent shape images
 let shapeImages = [];
 function preload() {
   // Load shape images into the array
@@ -54,17 +20,23 @@ function preload() {
   }
 }
 
-let startTime;
-
+/*------------------------------------SETUP------------------------------------*/
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
 
   silhouetteWidth = Math.round((selectedBuilding.buildingMaxWidth / 10) * 1.5);
-  console.log(selectedBuilding)
   silhouetteHeight = Math.round((selectedBuilding.buildingMaxHeight / 10) * 1.5);
+  // Scale adjustment in case of a silhuette larger than canvas
+  if (silhouetteHeight > canvasHeight || silhouetteWidth > canvasWidth) {
+    silhouetteHeight = silhouetteHeight / 1.5;
+    silhouetteWidth = silhouetteWidth / 1.5;
+  }
+
   cols = selectedBuilding.constructionEnd - selectedBuilding.constructionStart;
+  // If the number of floors is unknown the number of rows is calculated by buildingMaxHeight / 300
   rows = selectedBuilding.numFloors ? selectedBuilding.numFloors : Math.round(selectedBuilding.buildingMaxHeight / 300);
 
+  // Grid properties
   cellWidth = Math.round(silhouetteWidth / cols);
   cellHeight = Math.round(silhouetteHeight / rows);
   gridWidth = Math.round(cellWidth * cols);
@@ -86,6 +58,7 @@ function setup() {
   startTime = millis();
 }
 
+/*------------------------------------DRAW------------------------------------*/
 function draw() {
   background(255);
   translate(xOffset, yOffset);
@@ -102,18 +75,27 @@ function draw() {
     }
   }
 
-  // Draw image of the building outline
+  // Draw the silhouette of the building from provided paths
   stroke("#000000")
   strokeWeight(4)
   beginShape();
   for (let i = 0;i < selectedBuilding.buildingSilhouette.length;i++) {
-    // Extract x and y coordinates from the vertex string
-    let coordinates = extractCoordinates(selectedBuilding.buildingSilhouette[i]);
-    let x = coordinates[0];
-    let y = coordinates[1];
-
-    // Add vertex to the shape
-    vertex(x, y);
+    let vertexType = selectedBuilding.buildingSilhouette[i];
+    if (vertexType.startsWith("vertex")) {
+      let coordinates = extractCoordinates(vertexType);
+      let x = coordinates[0];
+      let y = coordinates[1];
+      vertex(x, y);
+    } else if (vertexType.startsWith("bezierVertex")) {
+      let coordinates = extractCoordinates(vertexType);
+      let x1 = coordinates[0];
+      let y1 = coordinates[1];
+      let x2 = coordinates[2];
+      let y2 = coordinates[3];
+      let x3 = coordinates[4];
+      let y3 = coordinates[5];
+      bezierVertex(x1, y1, x2, y2, x3, y3);
+    }
   }
   endShape(CLOSE);
 
@@ -124,15 +106,16 @@ function draw() {
     shape.show();
   }
 
-  // Check if 15 seconds have passed
+  // Stop the animation after 15 seconds
   if (millis() - startTime >= 15000) {
-    noLoop(); // Stop the animation
+    noLoop();
   }
 }
 
+/*------------------------------------EXTRA FUNCTIONS & CLASSES------------------------------------*/
 function extractCoordinates(vertexString) {
-  // Remove "vertex(" and ")" from the string
-  let trimmedString = vertexString.replace('vertex(', '').replace(')', '');
+  // Remove "vertex/bezierVertex(" and ")" from the string
+  let trimmedString = vertexString.replace('vertex(', '').replace('bezierVertex(', '').replace(')', '');
   // Split the string by the comma and convert to numbers
   let coordinates = trimmedString.split(',').map(Number);
   return coordinates;
