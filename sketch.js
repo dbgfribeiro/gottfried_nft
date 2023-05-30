@@ -1,9 +1,8 @@
 /*------------------------------------DECLARATIONS------------------------------------*/
-const selectedBuilding = buildingsData[0];
+const selectedBuilding = buildingsData[4];
 
 let silhouetteWidth, silhouetteHeight, cols, rows;
 let cellWidth, cellHeight, gridWidth, gridHeight, xOffset, yOffset;
-let startTime;
 
 let canvasWidth = 1280;
 let canvasHeight = 720;
@@ -20,6 +19,9 @@ function preload() {
     // shapeImages[i] = loadImage(`assets/shapes/building${selectedBuilding.id}/shape${i}.svg`);
   }
 }
+
+// Number to be incremented in order to create a 15-second animation
+let startTime;
 
 /*------------------------------------SETUP------------------------------------*/
 function setup() {
@@ -44,7 +46,7 @@ function setup() {
 
   cols = selectedBuilding.constructionEnd - selectedBuilding.constructionStart;
   // If the number of floors is unknown the number of rows is calculated by buildingMaxHeight / 300
-  rows = selectedBuilding.numFloors ? selectedBuilding.numFloors : Math.round(selectedBuilding.buildingMaxHeight / 300);
+  rows = selectedBuilding.numFloors || Math.round(selectedBuilding.buildingMaxHeight / 300);
 
   // Grid properties
   cellWidth = Math.round(silhouetteWidth / cols);
@@ -71,11 +73,18 @@ function setup() {
 /*------------------------------------DRAW------------------------------------*/
 function draw() {
   background("#101010");
-  translate(xOffset, yOffset);
+
+  // Write the names of the buildings.
+  noStroke();
+  fill(100);
+  textSize(16);
+  text(selectedBuilding.name, 25, canvasHeight - 25);
+  text("by Gottfried Böhm", canvasWidth - 155, canvasHeight - 25);
 
   // Draw the grid
+  translate(xOffset, yOffset);
   noFill();
-  stroke(255, 255, 255, 15)
+  stroke(255, 255, 255, 10)
   strokeWeight(1);
   for (let row = 0;row < rows;row++) {
     for (let col = 0;col < cols;col++) {
@@ -83,6 +92,13 @@ function draw() {
       let y = row * cellHeight;
       rect(x, y, cellWidth, cellHeight);
     }
+  }
+
+  // Move and show each shape
+  for (let i = 0;i < shapes.length;i++) {
+    let shape = shapes[i];
+    shape.move();
+    shape.show();
   }
 
   // Draw the silhouette of the building from provided paths
@@ -109,124 +125,17 @@ function draw() {
   }
   endShape(CLOSE);
 
-  // Move and show each shape
-  for (let i = 0;i < shapes.length;i++) {
-    let shape = shapes[i];
-    shape.move();
-    shape.show();
-  }
-
   // Stop the animation after 15 seconds
   if (millis() - startTime >= 15000) {
     noLoop();
   }
 }
 
-/*------------------------------------EXTRA FUNCTIONS & CLASSES------------------------------------*/
+/*------------------------------------EXTRA FUNCTIONS------------------------------------*/
 function extractCoordinates(vertexString) {
   // Remove "vertex/bezierVertex(" and ")" from the string
   let trimmedString = vertexString.replace('vertex(', '').replace('bezierVertex(', '').replace(')', '');
   // Split the string by the comma and convert to numbers
   let coordinates = trimmedString.split(',').map(Number);
   return coordinates;
-}
-
-// Define the Shape class
-class Shape {
-  constructor(img, vertexIndex, w, h) {
-    this.img = img;
-    this.vertexIndex = vertexIndex;
-    this.w = w || random(50, selectedBuilding.maxShapeSize);
-    this.h = h || random(50, selectedBuilding.maxShapeSize);
-    this.rotation = random(0, TWO_PI); // Random initial rotation between 0 and 2π (360 degrees)
-    this.speed = random(100, 1000); // Random speed between 10 milliseconds and 1 second
-    this.stopped = false;
-
-    // Calculate initial position based on the vertex index
-    let vertex = selectedBuilding.buildingSilhouette[this.vertexIndex];
-    let coordinates = extractCoordinates(vertex);
-    let x = coordinates[0];
-    let y = coordinates[1];
-
-    // Keep adjusting the position until it falls within the building silhouette
-    while (!this.collidesWithBuildingSilhouette(x, y)) {
-      let randomOffsetX = random(-cellWidth, cellWidth);
-      let randomOffsetY = random(-cellHeight, cellHeight);
-      x = coordinates[0] + randomOffsetX;
-      y = coordinates[1] + randomOffsetY;
-    }
-
-    this.x = x;
-    this.y = y;
-    this.targetX = this.x;
-    this.targetY = this.y;
-    this.targetW = this.w;
-    this.targetH = this.h;
-
-    this.lastMoveTime = millis(); // Track the last move time
-  }
-
-  move() {
-    if (!this.stopped && millis() - this.lastMoveTime >= this.speed) {
-      let newX = this.x;
-      let newY = this.y;
-
-      // Keep adjusting the position until it falls within the building silhouette
-      while ((newX === this.x && newY === this.y) || !this.collidesWithBuildingSilhouette(newX, newY)) {
-        newX = random(0, gridWidth - this.w);
-        newY = random(0, gridHeight - this.h);
-      }
-
-      this.x = newX;
-      this.y = newY;
-      this.w = random(50, selectedBuilding.maxShapeSize);
-      this.h = random(50, selectedBuilding.maxShapeSize);
-      this.lastMoveTime = millis();
-    }
-  }
-
-  collidesWithBuildingSilhouette(x, y) {
-    let vertices = [];
-    for (let i = 0;i < selectedBuilding.buildingSilhouette.length;i++) {
-      let coordinates = extractCoordinates(selectedBuilding.buildingSilhouette[i]);
-      let silhouetteX = coordinates[0];
-      let silhouetteY = coordinates[1];
-      vertices.push({ x: silhouetteX, y: silhouetteY });
-    }
-    return this.pointInPolygon(x, y, vertices);
-  }
-
-  pointInPolygon(x, y, vertices) {
-    let inside = false;
-    for (let i = 0, j = vertices.length - 1;i < vertices.length;j = i++) {
-      let xi = vertices[i].x,
-        yi = vertices[i].y;
-      let xj = vertices[j].x,
-        yj = vertices[j].y;
-      let intersect = ((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
-      if (intersect) inside = !inside;
-    }
-    return inside;
-  }
-
-  collidesWithPosition(x, y, w, h) {
-    return (
-      x < this.x + this.w &&
-      x + w > this.x &&
-      y < this.y + this.h &&
-      y + h > this.y
-    );
-  }
-
-  stop() {
-    this.stopped = true;
-  }
-
-  show() {
-    push(); // Save the current transformation state
-    translate(this.x + this.w / 2, this.y + this.h / 2); // Translate to the center of the shape
-    rotate(this.rotation); // Apply the rotation
-    image(this.img, -this.w / 2, -this.h / 2, this.w, this.h); // Draw the shape
-    pop(); // Restore the previous transformation state
-  }
 }
