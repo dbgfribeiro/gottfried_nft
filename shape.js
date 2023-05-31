@@ -6,7 +6,7 @@ class Shape {
     this.w = w || random(50, selectedBuilding.maxShapeSize);
     this.h = h || random(50, selectedBuilding.maxShapeSize);
     this.rotation = random(0, TWO_PI); // Random initial rotation between 0 and 2π (360 degrees)
-    this.speed = random(100, 1000); // Random speed between 10 milliseconds and 1 second
+    this.speed = random(50, 750); // Random speed between 50 and 750 milliseconds
 
     // Calculate initial position based on the vertex index
     let vertex = selectedBuilding.buildingSilhouette[this.vertexIndex];

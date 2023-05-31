@@ -7,7 +7,7 @@ const buildingsData = [
     constructionStart: 1966,
     constructionEnd: 1968,
     numFloors: null,
-    maxShapeSize: 300,
+    maxShapeSize: 200,
     buildingSilhouette: wallPaths[0]
   },
   {
@@ -40,7 +40,7 @@ const buildingsData = [
     constructionStart: 2009,
     constructionEnd: 2017,
     numFloors: null,
-    maxShapeSize: 300,
+    maxShapeSize: 200,
     buildingSilhouette: wallPaths[3]
   },
   {
@@ -106,7 +106,7 @@ const buildingsData = [
     constructionStart: 1961,
     constructionEnd: 1964,
     numFloors: null,
-    maxShapeSize: 200,
+    maxShapeSize: 150,
     buildingSilhouette: wallPaths[9]
   },
   {

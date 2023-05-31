@@ -1,5 +1,6 @@
 /*------------------------------------DECLARATIONS------------------------------------*/
-const selectedBuilding = buildingsData[4];
+// Change this value to generate an NTF for a different building
+const selectedBuilding = buildingsData[10]; // 0-11
 
 let silhouetteWidth, silhouetteHeight, cols, rows;
 let cellWidth, cellHeight, gridWidth, gridHeight, xOffset, yOffset;
@@ -15,8 +16,8 @@ let shapeImages = [];
 function preload() {
   // Load shape images into the array
   for (let i = 0;i < 10;i++) {
-    shapeImages[i] = loadImage(`assets/shape${i}.svg`);
-    // shapeImages[i] = loadImage(`assets/shapes/building${selectedBuilding.id}/shape${i}.svg`);
+    // shapeImages[i] = loadImage(`assets/shape${i}.svg`);
+    shapeImages[i] = loadImage(`assets/shapes/building${selectedBuilding.id}/shape${i}.png`);
   }
 }
 
@@ -56,6 +57,8 @@ function setup() {
   xOffset = Math.round((width - gridWidth) / 2);
   yOffset = Math.round((height - gridHeight) / 2);
 
+  // Duplicate the set of shapes
+  shapeImages = arrayMultiplier(shapeImages);
   // Create the initial set of shapes at random positions in the grid
   for (let i = 0;i < shapeImages.length;i++) {
     let shape = new Shape(
@@ -84,7 +87,7 @@ function draw() {
   // Draw the grid
   translate(xOffset, yOffset);
   noFill();
-  stroke(255, 255, 255, 10)
+  stroke(255, 255, 255, 0)
   strokeWeight(1);
   for (let row = 0;row < rows;row++) {
     for (let col = 0;col < cols;col++) {
@@ -138,4 +141,9 @@ function extractCoordinates(vertexString) {
   // Split the string by the comma and convert to numbers
   let coordinates = trimmedString.split(',').map(Number);
   return coordinates;
+}
+
+function arrayMultiplier(arr) {
+  // Multiplicate the array 4 times
+  return arr.flatMap(shapes => [shapes, shapes, shapes, shapes]);
 }
